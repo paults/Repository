@@ -22,11 +22,11 @@ namespace WebApplication1.Controllers
             return "Hi, I am not action method";
         }
 
-
+        [Authorize]
         public ActionResult Index()
         {
             EmployeeListViewModel employeeListViewModel = new EmployeeListViewModel();
-
+            employeeListViewModel.UserName = User.Identity.Name;
             EmployeeBusinessLayer empBal = new EmployeeBusinessLayer();
             List<Employee> employees = empBal.GetEmployees();
 
@@ -53,49 +53,39 @@ namespace WebApplication1.Controllers
         }
         public ActionResult AddNew()
         {
-            return View("CreateEmployee");
+            return View("CreateEmployee", new CreateEmployeeViewModel());
         }
     public ActionResult SaveEmployee(Employee e, string BtnSubmit)
     {
-        switch (BtnSubmit)
-        {
-            case "Save Employee":
-                if (ModelState.IsValid)
-                {
-                    EmployeeBusinessLayer empBal = new EmployeeBusinessLayer();
-                    empBal.SaveEmployee(e);
+            switch (BtnSubmit)
+            {
+                case "Save Employee":
+                    if (ModelState.IsValid)
+                    {
+                        EmployeeBusinessLayer empBal = new EmployeeBusinessLayer();
+                        empBal.SaveEmployee(e);
+                        return RedirectToAction("Index");
+                    }
+                    else
+                    {
+                        CreateEmployeeViewModel vm = new CreateEmployeeViewModel();
+                        vm.FirstName = e.FirstName;
+                        vm.LastName = e.LastName;
+                        if (e.Salary.HasValue)
+                        {
+                            vm.Salary = e.Salary.ToString();
+                        }
+                        else
+                        {
+                            vm.Salary = ModelState["Salary"].Value.AttemptedValue;
+                        }
+                        return View("CreateEmployee", vm);
+                    }
+                case "Cancel":
                     return RedirectToAction("Index");
-                }
-                else
-                {
-                    return View("CreateEmployee");
-                }
-            case "Cancel":
-                return RedirectToAction("Index");
-        }
-        return new EmptyResult();
+            }
+            return new EmptyResult();
     }
-        //public ActionResult SaveEmployee([ModelBinder(typeof(MyEmployeeModelBinder))]Employee e, string BtnSubmit)
-        //{
-        //    switch (BtnSubmit)
-        //    {
-        //        case "Save Employee":
-        //            return Content(e.FirstName + "|" + e.LastName + "|" + e.Salary);
-        //        case "Cancel":
-        //            return RedirectToAction("Index");
-        //    }
-        //    return new EmptyResult();
-        //}
+        
     }
-    //public class MyEmployeeModelBinder : DefaultModelBinder
-    //{
-    //    protected override object CreateModel(ControllerContext controllerContext, ModelBindingContext bindingContext, Type modelType)
-    //    {
-    //        Employee e = new Employee();
-    //        e.FirstName = controllerContext.RequestContext.HttpContext.Request.Form["FName"];
-    //        e.LastName = controllerContext.RequestContext.HttpContext.Request.Form["LName"];
-    //        e.Salary = int.Parse(controllerContext.RequestContext.HttpContext.Request.Form["Salary"]);
-    //        return e;
-    //    }
-    //}
 }
